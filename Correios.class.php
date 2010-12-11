@@ -18,7 +18,7 @@
  **/
 class Correios
 {
-    #inicializando os tipos de frete, e se existe um produto.
+    #inicializando os tipos de frete e, se existe um produto.
     
     const FRETE_PAC         = '41106'; #PAC sem contrato
     const FRETE_SEDEX       = '40010'; #SEDEX sem contrato
@@ -35,14 +35,15 @@ class Correios
 
     public function __construct($object)
     {
-       $this->produto = (empty($object)) ? echo $this->error_type(1) : $object;
+        $this->produto = (empty($object)) ? null : $object;
+        if (is_null($this->produto)) return $this->error_type(1);
     }
 
     public function calcula_frete ($cepOrigem = '', $cepDestino = '')
     {
 
         if ($cepOrigem <> '' || $cepDestino <> ''):
-            $replaces = Array ('-',' ','/','_');
+            $replace = Array ('-',' ','/','_');
             $cepOrigem = str_replace($replaces,'', $cepOrigem);
             $cepDestino = str_replace($replaces,'', $cepDestino);
         else:
@@ -66,13 +67,15 @@ class Correios
                 'sCdAvisoRecebimento'   => 'n',
                 'nCdServico'            => self::FRETE_PAC,
                 'nVlDiametro'           => '0',           
-                'StrRetorno'            => 'xml' #opções possíveis: 'popup', 'xml' e URL (será retornado via POST)               
+                'StrRetorno'            => 'xml' #opções possíveis: 'popup', 'xml' e URL (este será retornado via POST)               
             );
                
             $page_correios_query = http_build_query($dados);
             $page_correios_url   = file_get_contents(self::URL_CORREIOS . $page_correios_query);
-        endif;
-           
+        else:
+            return False;
+        endif;           
+
         return $page_correios_url;
     }
 
@@ -80,50 +83,53 @@ class Correios
     public function format_xml ($options, $args = '')
     {
         if ((int)$options):
-           
-            $dom = new DOMDocument('1.0','iso-8859-1');
-            $dom->formatOutput = True;
-            $dom->loadXML($this->calcula_frete());
+               if ($this->calcula_frete()):
+                $dom = new DOMDocument('1.0','iso-8859-1'); #infelizmente, o xml gerado pelos Correios é neste charset.
+                $dom->formatOutput = True;
+                $dom->loadXML($this->calcula_frete());
 
-            if ($options == 1):
-                $tags = Array ( 
-                        'Valor',
-                        'PrazoEntrega',
-                        'ValorMaoPropria',
-                        'ValorAvisoRecebimento',
-                        'ValorDeclarado',
-                        'EntregaDomiciliar',
-                        'EntregaSabado',
-                        'Erro',
-                        'MsgErro'
-                );
+                if ($options == 1):
+                    $tags = Array ( 
+                            'Valor',
+                            'PrazoEntrega',
+                            'ValorMaoPropria',
+                            'ValorAvisoRecebimento',
+                            'ValorDeclarado',
+                            'EntregaDomiciliar',
+                            'EntregaSabado',
+                            'Erro',
+                            'MsgErro'
+                    );
 
-                foreach ($tags as $key => $value):
-                    @$this->output[$value] = $dom->getElementsByTagName($value)->item(0)->nodeValue;
-                endforeach;
+                    foreach ($tags as $key => $value):
+                        @$this->output[$value] = $dom->getElementsByTagName($value)->item(0)->nodeValue;
+                    endforeach;
 
-            elseif ($options == 2):
-                $this->output = Array(
-                    'Valor' => $dom->getElementsByTagName('Valor')
-                    ->item(0)->nodeValue,
-                    'Prazo' => $dom->getElementsByTagName('PrazoEntrega')
-                    ->item(0)->nodeValue,
-                    'Erro' => $dom->GetElementsByTagName('Erro')
-                    ->item(0)->nodeValue
-                );
+                elseif ($options == 2):
+                    $this->output = Array(
+                        'Valor' => $dom->getElementsByTagName('Valor')
+                        ->item(0)->nodeValue,
+                        'Prazo' => $dom->getElementsByTagName('PrazoEntrega')
+                        ->item(0)->nodeValue,
+                        'Erro' => $dom->GetElementsByTagName('Erro')
+                        ->item(0)->nodeValue
+                    );
+                endif;
+            else:
+                return False;
             endif;
          endif;
 
          return $this->output;
     }
 
-    private function error_type ($error_number)
+    public function error_type ($error_number)
     {
         if ((int)$error):
             switch ($error):
                 case 1: $error_msg = 'Produto não definido'; break; # esqueceram de chamar o produto...
-                case 2: $error_msg = 'Não foi possível calcular o frete. Aguarde.'; #provavelmente um problema no get/post dos correios
-                case 3: $error_msg = 'Erro fatal. Consulte o administrador.'; # Exception
+                case 2: $error_msg = 'Não foi possível calcular o frete. Aguarde.'; break; #provavelmente um problema no get/post dos correios
+                case 3: $error_msg = 'Erro fatal. Consulte o administrador.'; break; # Exception
             endswitch;
         endif;
         return $error_msg;
