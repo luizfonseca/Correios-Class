@@ -30,12 +30,12 @@ class Correios
 
     public $produto = null; 
     public $output  = Array();
-    protected $dom    = null;
+    protected $dom  = null;
 
 
     public function __construct($object)
     {
-       $this->produto = (empty($object)) ? $this->error_type(1) : $object;
+       $this->produto = (empty($object)) ? echo $this->error_type(1) : $object;
     }
 
     public function calcula_frete ($cepOrigem = '', $cepDestino = '')
@@ -117,7 +117,7 @@ class Correios
          return $this->output;
     }
 
-    public function error_type ($error_number)
+    private function error_type ($error_number)
     {
         if ((int)$error):
             switch ($error):
