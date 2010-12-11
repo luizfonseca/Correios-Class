@@ -42,7 +42,7 @@ class Correios
     {
 
         if ($cepOrigem <> '' || $cepDestino <> ''):
-            $replace = Array ('-',' ','/','_');
+            $replaces = Array ('-',' ','/','_');
             $cepOrigem = str_replace($replaces,'', $cepOrigem);
             $cepDestino = str_replace($replaces,'', $cepDestino);
         else:
