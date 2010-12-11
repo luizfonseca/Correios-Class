@@ -1,28 +1,19 @@
 ﻿<?php
 
 /**
- * @param $produto
- * nCdEmpresa=
- * &sDsSenha=
- * &sCepOrigem=
- * 71939360&
- * sCepDestino=
- * 72151613
- * &
- * nVlPeso=1&
- * nCdFormato
- * =1&
- * nVlComprimento
- * =20&
- * nVlAltura=5&
- * nVlLargura=15&
- * sCdMaoPropria=
- * s&nVlValorDeclarado=200&
- * sCdAvisoRecebimento=n&
- * nCdServico=41106&
- * nVlDiametro=0&
- * StrRetorno=http://ws.correios.com.br/calculador/popuptarifa.aspx
+ * Correios - Class
  *
+ * Returns an Array with all data provided by Correios itself
+ * Requires DOMDocument lib
+ *
+ * @author Luiz Claudio M. Fonseca
+ * @copyright Copyright (c)
+ * @license http://www.opensource.org/licenses/bsd-license.php
+ *
+ * @param string $produto
+ * @params Array | string CdEmpresa, sdDsSenha, sCepOrigem, SCepDestino, nVlPeso, nCdFormato, 
+ * @params Array | string nVlComprimento, nVlAltura, nVlLargura, sCdMaoPropria, nVlValorDeclarado,
+ * @params Array | string sCdAvisoRecebimento, nCdServico, nVlDiametro, StrRetorno 
  *
  **/
 class Correios
@@ -33,20 +24,19 @@ class Correios
     const FRETE_SEDEX       = '40010'; #SEDEX sem contrato
     const FRETE_SEDEX_10    = '40215'; #SEDEX 10, sem contrato
     const FRETE_SEDEX_HOJE  = '40290'; #SEDEX HOJE, sem contrato
-    const FRETE_COBRAR     = '40045'; #SEDEX a Cobrar, sem contrato
+    const FRETE_COBRAR      = '40045'; #SEDEX a Cobrar, sem contrato
     const FRETE_E_SEDEX     = '81019'; #e-SEDEX, com contrato
     const URL_CORREIOS      = 'http://ws.correios.com.br/calculador/CalcPrecoPrazo.aspx?';
 
     public $produto = null; 
-    public $output = Array();
-    private $dom = null;
+    public $output  = Array();
+    protected $dom    = null;
 
 
     public function __construct($object)
     {
        $this->produto = (empty($object)) ? $this->error_type(1) : $object;
     }
-
 
     public function calcula_frete ($cepOrigem = '', $cepDestino = '')
     {
@@ -83,7 +73,7 @@ class Correios
             $page_correios_url   = file_get_contents(self::URL_CORREIOS . $page_correios_query);
         endif;
            
-            return $page_correios_url;
+        return $page_correios_url;
     }
 
 
@@ -139,7 +129,4 @@ class Correios
         return $error_msg;
     }
 }
-
-
-
 ?>
