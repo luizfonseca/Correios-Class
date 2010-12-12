@@ -18,7 +18,7 @@ $correios = new Correios($sample_product);
  *@param calcula_frete( $cepOrigem, $cepDestino );
  */
 
-$correios->calcula_frete();  
+$correios->calcula_frete(1);  
 
 
 /*
@@ -27,6 +27,6 @@ $correios->calcula_frete();
  * 2 - return only Valor, PrazoEntrega and Erro
  */
 
-print_r($correios->format_xml(2));
+print_r($correios->readable_xml(1));
 
 ?>

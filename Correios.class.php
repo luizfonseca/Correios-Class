@@ -11,9 +11,9 @@
  * @license http://www.opensource.org/licenses/bsd-license.php
  *
  * @param string $produto
- * @params Array | string CdEmpresa, sdDsSenha, sCepOrigem, SCepDestino, nVlPeso, nCdFormato, 
- * @params Array | string nVlComprimento, nVlAltura, nVlLargura, sCdMaoPropria, nVlValorDeclarado,
- * @params Array | string sCdAvisoRecebimento, nCdServico, nVlDiametro, StrRetorno 
+ * @param Array | string CdEmpresa, sdDsSenha, sCepOrigem, SCepDestino, nVlPeso, nCdFormato, 
+ * @param Array | string nVlComprimento, nVlAltura, nVlLargura, sCdMaoPropria, nVlValorDeclarado,
+ * @param Array | string sCdAvisoRecebimento, nCdServico, nVlDiametro, StrRetorno 
  *
  **/
 class Correios
@@ -26,48 +26,92 @@ class Correios
     const FRETE_SEDEX_HOJE  = '40290'; #SEDEX HOJE, sem contrato
     const FRETE_COBRAR      = '40045'; #SEDEX a Cobrar, sem contrato
     const FRETE_E_SEDEX     = '81019'; #e-SEDEX, com contrato
+    const FRETE_SEDEX_C     = '40096'; #SEDEX com contrato
     const URL_CORREIOS      = 'http://ws.correios.com.br/calculador/CalcPrecoPrazo.aspx?';
 
-    public $produto = null; 
-    public $output  = Array();
-    protected $dom  = null;
+
+    public  $output      = Array();
+    public  $produto     = null;
+    private $largura     = '20'; # if is FRETE_PAC, obrigatory.
+    private $altura      = '20'; # if is FRETE_PAC, obrigatory.
+    private $comprimento = '20'; # if is FRETE_PAC, obrigatory.
+    private $diametro    = '0';
+    private $formato     = '1';
+    private $valor       = '0'; 
+    protected $dom       = null;
 
 
     public function __construct($object)
     {
-        $this->produto = (empty($object)) ? null : $object;
+        $this->produto = (!isset($object) && $object == '') ? null : $object;
         if (is_null($this->produto)) return $this->error_type(1);
     }
 
-    public function calcula_frete ($cepOrigem = '', $cepDestino = '')
+    public function set_product_detail (  $nVlLargura = '', $nVlAltura = '', $nVlComprimento = '', $nVlDiametro = '', $nCdFormato = '', $nVlValor = '' )
+    {
+        $this->largura      = ((int)$nVlLargura <> '')      ? $nVlLargura     : $this->largura;
+        $this->altura       = ((int)$nVlAltura  <> '')      ? $nVlAltura      : $this->altura;
+        $this->comprimento  = ((int)$nVlComprimento <> '')  ? $nVlComprimento : $this->comprimento;
+        $this->diametro     = ((int)$nVlDiametro <> '')     ? $nVlDiametro    : $this->diametro;
+        $this->formato      = ((int)$nCdFormato <> '')      ? $nCdFormato     : $this->formato;
+        $this->valor        = ((int)$nVlValor <> '')        ? $nVlValor       : $this->valor; 
+    }
+
+
+
+
+    public function calcula_frete ( $tipoFrete = 1, $cepOrigem = '', $cepDestino = '', $pesoProduto = '')
     {
 
-        if ($cepOrigem <> '' || $cepDestino <> ''):
-            $replace = Array ('-',' ','/','_');
+        if ($cepOrigem <> '' && $cepDestino <> '' && (int)$tipoFrete <> '' && (int)$pesoProduto <> '' ):
+            $replaces = Array ('-',' ','/','_');
             $cepOrigem = str_replace($replaces,'', $cepOrigem);
             $cepDestino = str_replace($replaces,'', $cepDestino);
         else:
             $cepOrigem = '78230000'; #valor padrão
             $cepDestino = '78110020'; #valor padrão
+            $pesoProduto = 1; 
+			switch ((int)$tipoFrete):
+				case 1:     $tipoFrete = self::FRETE_PAC;
+				case 2:     $tipoFrete = self::FRETE_SEDEX;
+                case 3:     $tipoFrete = self::FRETE_SEDEX_10;
+                case 4:     $tipoFrete = self::FRETE_SEDEX_HOJE;
+                case 5:     $tipoFrete = self::FRETE_COBRAR;
+                case 6:     $tipoFrete = self::FRETE_E_SEDEX;
+                case 7:     $tipoFrete = self::FRETE_SEDEX_C;
+                default:    $tipoFrete = self::FRETE_PAC;
+            endswitch;
+            if ($tipoFrete == 1):
+                if ( $this->largura > 60 or $this->largura < 5 ): # Se for FRETE_PAC, largura não pode exceder esses valores.
+                    return False; endif;
+                if ( $this->largura < 11 && $this->comprimento < 25 ):
+                    return False; endif;
+                if ( $this->comprimento < 16 or $this->comprimento > 60):
+                    return False; endif;
+                if ( ($this->largura + $this->altura + $this->comprimento) > 160):
+                    return False; endif;
+                if ( $this->altura > $this->comprimento ):
+                    return False; endif;
+            endif;
         endif;
     
         if (!is_null($this->produto)):
             $dados = Array(
-                'nCdEmpresa'            => '',
-                'sDsSenha'              => '',
+                'nCdEmpresa'            => '',                  #Opcional 
+                'sDsSenha'              => '',                  #Opcional 
                 'sCepOrigem'            => $cepOrigem,
                 'sCepDestino'           => $cepDestino,
-                'nVlPeso'               => '10',
-                'nCdFormato'            => '1',
-                'nVlComprimento'        => '20',
-                'nVlAltura'             => '20',
-                'nVlLargura'            => '20',
+                'nVlPeso'               => $pesoProduto,
+                'nCdFormato'            => $this->formato,      # 1 - Formato caixa/pacote ; 2 - Formato rolo/prisma
+                'nVlComprimento'        => $this->comprimento,  # Comprimento em centímetros
+                'nVlAltura'             => $this->altura,       # Altura em centímetros (incluíndo embalagem)
+                'nVlLargura'            => $this->largura,      # Largura em centímetros (incluindo embalagem)
                 'sCdMaoPropria'         => 'n',
-                'nVlValorDeclarado'     => '220',
-                'sCdAvisoRecebimento'   => 'n',
-                'nCdServico'            => self::FRETE_PAC,
-                'nVlDiametro'           => '0',           
-                'StrRetorno'            => 'xml' #opções possíveis: 'popup', 'xml' e URL (este será retornado via POST)               
+                'nVlValorDeclarado'     => $this->valor,        # Valor declarado no envio?
+                'sCdAvisoRecebimento'   => 'n',                 
+                'nCdServico'            => $tipoFrete,          # PAC, SEDEX , etc.
+                'nVlDiametro'           => $this->diametro,     # Diametro ( padrão 0 )      
+                'StrRetorno'            => 'xml'                #opções possíveis: 'popup', 'xml' e URL (este será retornado via POST)               
             );
                
             $page_correios_query = http_build_query($dados);
@@ -80,7 +124,7 @@ class Correios
     }
 
 
-    public function format_xml ($options, $args = '')
+    public function readable_xml ($options, $args = '')
     {
         if ((int)$options):
                if ($this->calcula_frete()):
@@ -111,7 +155,7 @@ class Correios
                         ->item(0)->nodeValue,
                         'Prazo' => $dom->getElementsByTagName('PrazoEntrega')
                         ->item(0)->nodeValue,
-                        'Erro' => $dom->GetElementsByTagName('Erro')
+                        'Erro' 	=> $dom->GetElementsByTagName('Erro')
                         ->item(0)->nodeValue
                     );
                 endif;
@@ -123,7 +167,7 @@ class Correios
          return $this->output;
     }
 
-    public function error_type ($error_number)
+    public function error_type ($error)
     {
         if ((int)$error):
             switch ($error):
