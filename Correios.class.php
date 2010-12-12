@@ -57,9 +57,6 @@ class Correios
         $this->valor        = ((int)$nVlValor       <> '')      ? $nVlValor       : $this->valor; 
     }
 
-
-
-
     public function calcula_frete ( $tipoFrete = 1, $cepOrigem = '', $cepDestino = '', $pesoProduto = '')
     {
 
@@ -123,7 +120,6 @@ class Correios
 
         return $page_correios_url;
     }
-
 
     public function readable_xml ($options, $args = '')
     {
