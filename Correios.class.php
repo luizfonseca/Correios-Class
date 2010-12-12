@@ -49,12 +49,12 @@ class Correios
 
     public function set_product_detail (  $nVlLargura = '', $nVlAltura = '', $nVlComprimento = '', $nVlDiametro = '', $nCdFormato = '', $nVlValor = '' )
     {
-        $this->largura      = ((int)$nVlLargura <> '')      ? $nVlLargura     : $this->largura;
-        $this->altura       = ((int)$nVlAltura  <> '')      ? $nVlAltura      : $this->altura;
-        $this->comprimento  = ((int)$nVlComprimento <> '')  ? $nVlComprimento : $this->comprimento;
-        $this->diametro     = ((int)$nVlDiametro <> '')     ? $nVlDiametro    : $this->diametro;
-        $this->formato      = ((int)$nCdFormato <> '')      ? $nCdFormato     : $this->formato;
-        $this->valor        = ((int)$nVlValor <> '')        ? $nVlValor       : $this->valor; 
+        $this->largura      = ((int)$nVlLargura     <> '')      ? $nVlLargura     : $this->largura;
+        $this->altura       = ((int)$nVlAltura      <> '')      ? $nVlAltura      : $this->altura;
+        $this->comprimento  = ((int)$nVlComprimento <> '')      ? $nVlComprimento : $this->comprimento;
+        $this->diametro     = ((int)$nVlDiametro    <> '')      ? $nVlDiametro    : $this->diametro;
+        $this->formato      = ((int)$nCdFormato     <> '')      ? $nCdFormato     : $this->formato;
+        $this->valor        = ((int)$nVlValor       <> '')      ? $nVlValor       : $this->valor; 
     }
 
 
@@ -71,9 +71,10 @@ class Correios
             $cepOrigem = '78230000'; #valor padrão
             $cepDestino = '78110020'; #valor padrão
             $pesoProduto = 1; 
-			switch ((int)$tipoFrete):
-				case 1:     $tipoFrete = self::FRETE_PAC;
-				case 2:     $tipoFrete = self::FRETE_SEDEX;
+
+            switch ((int)$tipoFrete):
+                case 1:     $tipoFrete = self::FRETE_PAC;
+                case 2:     $tipoFrete = self::FRETE_SEDEX;
                 case 3:     $tipoFrete = self::FRETE_SEDEX_10;
                 case 4:     $tipoFrete = self::FRETE_SEDEX_HOJE;
                 case 5:     $tipoFrete = self::FRETE_COBRAR;
