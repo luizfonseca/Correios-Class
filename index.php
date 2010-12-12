@@ -27,6 +27,6 @@ $correios->calcula_frete(1);
  * 2 - return only Valor, PrazoEntrega and Erro
  */
 
-print_r($correios->readable_xml(1));
+print_r($correios->return_array(1));
 
 ?>

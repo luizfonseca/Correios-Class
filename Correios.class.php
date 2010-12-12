@@ -57,7 +57,7 @@ class Correios
         $this->valor        = ((int)$nVlValor       <> '')      ? $nVlValor       : $this->valor; 
     }
 
-    public function calcula_frete ( $tipoFrete = 1, $cepOrigem = '', $cepDestino = '', $pesoProduto = '')
+    public function calcular_frete ( $tipoFrete = 1, $cepOrigem = '', $cepDestino = '', $pesoProduto = '')
     {
 
         if ($cepOrigem <> '' && $cepDestino <> '' && (int)$tipoFrete <> '' && (int)$pesoProduto <> '' ):
@@ -121,13 +121,13 @@ class Correios
         return $page_correios_url;
     }
 
-    public function readable_xml ($options, $args = '')
+    public function return_array ($options, $args = '')
     {
         if ((int)$options):
-               if ($this->calcula_frete()):
+            if ($this->calcular_frete()):
                 $dom = new DOMDocument('1.0','iso-8859-1'); #infelizmente, o xml gerado pelos Correios é neste charset.
                 $dom->formatOutput = True;
-                $dom->loadXML($this->calcula_frete());
+                $dom->loadXML($this->calcular_frete());
 
                 if ($options == 1):
                     $tags = Array ( 
